@@ -1,0 +1,23 @@
+---
+- name: Create instance(s)
+  hosts: localhost
+  connection: local
+  gather_facts: no
+
+  tasks:
+   - name: Launch instances
+     gce:
+         instance_names: webserver
+         machine_type: "{{ machine_type }}"
+         image: "{{ image }}"
+         service_account_email: "{{ service_account_email }}"
+         credentials_file: "{{ credentials_file }}"
+         project_id: "{{ project_id }}"
+         state: present
+     register: gce
+  vars:
+    service_account_email: demo-sc2018@api-project-944070901719.iam.gserviceaccount.com
+    credentials_file: ./API Project-9326f13eba0e.json
+    project_id: api-project-944070901719
+    machine_type: f1-micro
+    image: debian-7
