@@ -1,23 +1,38 @@
 ---
-- name: Create instance(s)
+- name: Create instance
   hosts: localhost
   connection: local
   gather_facts: no
 
   tasks:
-   - name: Launch instances
-     gce:
-         instance_names: webserver
-         machine_type: "{{ machine_type }}"
-         image: "{{ image }}"
-         service_account_email: "{{ service_account_email }}"
-         credentials_file: "{{ credentials_file }}"
-         project_id: "{{ project_id }}"
-         state: present
-     register: gce
-  vars:
-    service_account_email: demo-sc2018@api-project-944070901719.iam.gserviceaccount.com
-    credentials_file: ./API Project-9326f13eba0e.json
-    project_id: api-project-944070901719
-    machine_type: f1-micro
-    image: debian-7
+    - name: Launch instance
+      gce:
+        instance_names: webserver
+        machine_type: "{{ machine_type }}"
+        image: "{{ image }}"
+        service_account_email: "{{ service_account_email }}"
+        credentials_file: "{{ credentials_file }}"
+        project_id: "{{ project_id }}"
+        state: present
+      register: gce
+    - name: Add host to groupname
+      add_host: hostname={{ item.public_ip }} groupname=gce
+      loop: "{{ gce.instance_data }}"
+    - name: Wait for SSH to come up
+      wait_for: host={{ item.public_ip }} port=22 delay=10 timeout=120
+      loop: "{{ gce.instance_data }}"
+
+- name: Create firewall rules
+  hosts: all
+  gather_facts: no
+  tasks:   
+    - name: Allow HTTP
+      local_action: gce_net
+      args:
+        fwname: "all-http"
+        name: "default"
+        allowed: "tcp:80"
+        service_account_email: "{{ service_account_email }}"
+        credentials_file: "{{ credentials_file }}"
+        project_id: "{{ project_id }}"
+        state: present

@@ -1,0 +1,7 @@
+---
+- name: Install and config Apache on Hosts
+  hosts: all
+  become: true
+  roles:
+    - name: geerlingguy.apache
+      tags: apache
